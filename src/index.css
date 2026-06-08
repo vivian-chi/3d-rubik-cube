@@ -1,0 +1,27 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Soft, vivid-but-calm backdrop so the cube stays the hero */
+  background: radial-gradient(120% 120% at 50% 20%, #fef6f0 0%, #f3ecff 45%, #e9f3ff 100%);
+}
+
+#root {
+  position: relative;
+}
