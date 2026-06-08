@@ -2,41 +2,15 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { Cubelet } from "./Cubelet";
-import { AXES, SPACING, snapToAxis, roundGrid, easeInOut, type AxisName } from "./math";
+import { AXES, SPACING, snapToAxis, roundGrid, easeInOut, stickerFacesFor } from "./math";
+import type { CubeletData, Turn, TurnSpec } from "./types";
+import { isSolved } from "./solve";
+import { randomTurns } from "./scramble";
+import { buildCelebration } from "./celebration";
 import type { Palette } from "../materials";
 
-type CubeletData = {
-  id: number;
-  /** Solved-state grid coords — used to restore on reset. */
-  home: { x: number; y: number; z: number };
-  /** Logical grid coords in {-1,0,1}. */
-  grid: { x: number; y: number; z: number };
-  /** Committed (settled) local transform. */
-  position: THREE.Vector3;
-  quaternion: THREE.Quaternion;
-  obj: THREE.Group | null;
-};
-
-type Turn = {
-  axis: AxisName;
-  layer: number; // which slice: -1, 0, or 1
-  dir: number; // +1 / -1 (rotation direction about the positive axis)
-  t: number; // 0..1 animation progress
-};
-
-const TURN_DURATION = 0.22; // seconds per 90° turn
-
-/** Which outward faces a cubelet shows, from its solved-state coords. */
-function stickerFacesFor(home: { x: number; y: number; z: number }): number[] {
-  const faces: number[] = [];
-  if (home.x === 1) faces.push(0);
-  if (home.x === -1) faces.push(1);
-  if (home.y === 1) faces.push(2);
-  if (home.y === -1) faces.push(3);
-  if (home.z === 1) faces.push(4);
-  if (home.z === -1) faces.push(5);
-  return faces;
-}
+const TURN_DURATION = 0.22; // seconds per user-driven 90° turn
+const SCRAMBLE_DURATION = 0.09; // faster turns while shuffling
 
 function buildCubelets(): CubeletData[] {
   const cubelets: CubeletData[] = [];
@@ -61,15 +35,21 @@ function buildCubelets(): CubeletData[] {
 type RubikCubeProps = {
   palette: Palette;
   resetSignal: number;
+  scrambleSignal: number;
+  onSolved: () => void;
 };
 
-export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
+export function RubikCube({ palette, resetSignal, scrambleSignal, onSolved }: RubikCubeProps) {
   const { camera } = useThree();
   const groupRef = useRef<THREE.Group>(null!);
   const cubelets = useMemo(buildCubelets, []);
 
   // Mutable interaction state (kept in refs so it never triggers re-renders).
   const turn = useRef<Turn | null>(null);
+  const turnQueue = useRef<TurnSpec[]>([]); // pending scramble turns
+  const scrambled = useRef(false); // has the cube been shuffled since last solve/reset?
+  const celebrating = useRef(false); // GSAP owns the objects while true
+  const tl = useRef<ReturnType<typeof buildCelebration> | null>(null);
   const mode = useRef<"none" | "gesture" | "orbit">("none");
   const cubeletHit = useRef(false);
   const gesture = useRef<{
@@ -81,9 +61,29 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
   } | null>(null);
   const orbit = useRef({ x: 0, y: 0 });
 
-  // Reset to solved whenever the parent bumps resetSignal.
+  // Latest onSolved without resubscribing the celebration to prop identity.
+  const onSolvedRef = useRef(onSolved);
   useEffect(() => {
+    onSolvedRef.current = onSolved;
+  }, [onSolved]);
+
+  // Stop any running celebration and restore the group's base transform.
+  const stopCelebration = () => {
+    tl.current?.kill();
+    tl.current = null;
+    celebrating.current = false;
+    if (groupRef.current) {
+      groupRef.current.position.set(0, 0, 0);
+      groupRef.current.scale.set(1, 1, 1);
+    }
+  };
+
+  // Reset to solved whenever the parent bumps resetSignal. Never celebrates.
+  useEffect(() => {
+    stopCelebration();
     turn.current = null;
+    turnQueue.current = [];
+    scrambled.current = false;
     mode.current = "none";
     gesture.current = null;
     // Restore exact solved state from each cubelet's fixed home coords.
@@ -95,9 +95,23 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
+  // Shuffle whenever the parent bumps scrambleSignal (skip the initial mount).
+  useEffect(() => {
+    if (scrambleSignal === 0) return;
+    stopCelebration();
+    turn.current = null;
+    mode.current = "none";
+    gesture.current = null;
+    turnQueue.current = randomTurns();
+    scrambled.current = true;
+  }, [scrambleSignal]);
+
+  // Kill any timeline if the component unmounts mid-celebration.
+  useEffect(() => () => void tl.current?.kill(), []);
+
   // --- Gesture: pointer down on a cubelet -------------------------------------
   const startGesture = (cubelet: CubeletData) => (e: ThreeEvent<PointerEvent>) => {
-    if (turn.current) return;
+    if (turn.current || celebrating.current || turnQueue.current.length) return;
     e.stopPropagation();
     const face = e.face;
     if (!face) return;
@@ -149,6 +163,7 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
       layer: g.cubelet.grid[axis],
       dir: sign,
       t: 0,
+      dur: TURN_DURATION,
     };
   };
 
@@ -160,7 +175,7 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
         cubeletHit.current = false; // consumed by startGesture
         return;
       }
-      if (turn.current) return;
+      if (turn.current || celebrating.current) return;
       mode.current = "orbit";
       orbit.current = { x: e.clientX, y: e.clientY };
     };
@@ -212,12 +227,38 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
     }
   };
 
+  // Begin the victory sequence. GSAP takes over the cube until it completes.
+  const startCelebration = () => {
+    celebrating.current = true;
+    turn.current = null;
+    mode.current = "none";
+    gesture.current = null;
+    tl.current = buildCelebration({
+      group: groupRef.current,
+      cubelets,
+      onMessage: () => onSolvedRef.current(),
+      onComplete: () => {
+        celebrating.current = false;
+        tl.current = null;
+      },
+    });
+  };
+
   useFrame((_, delta) => {
+    // While celebrating, GSAP drives the cubelets and group directly.
+    if (celebrating.current) return;
+
+    // Kick off the next queued (scramble) turn whenever the cube is idle.
+    if (!turn.current && turnQueue.current.length) {
+      const next = turnQueue.current.shift()!;
+      turn.current = { ...next, t: 0, dur: SCRAMBLE_DURATION };
+    }
+
     const t = turn.current;
     const tmpQ = new THREE.Quaternion();
 
     if (t) {
-      t.t = Math.min(1, t.t + delta / TURN_DURATION);
+      t.t = Math.min(1, t.t + delta / t.dur);
       const angle = t.dir * (Math.PI / 2) * easeInOut(t.t);
       tmpQ.setFromAxisAngle(AXES[t.axis], angle);
     }
@@ -236,6 +277,13 @@ export function RubikCube({ palette, resetSignal }: RubikCubeProps) {
     if (t && t.t >= 1) {
       commitTurn(t);
       turn.current = null;
+
+      // Once the cube settles with nothing queued, a genuine post-shuffle
+      // solve triggers the celebration. (Queued turns resume next frame.)
+      if (turnQueue.current.length === 0 && scrambled.current && isSolved(cubelets)) {
+        scrambled.current = false;
+        startCelebration();
+      }
     }
   });
 

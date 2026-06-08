@@ -3,13 +3,25 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { Scene } from "./Scene";
 import { Controls } from "./Controls";
+import { Celebration } from "./Celebration";
 import { PALETTES } from "./materials";
 
 export default function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
+  const [scrambleSignal, setScrambleSignal] = useState(0);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const palette = PALETTES[paletteIndex];
+
+  const scramble = () => {
+    setShowCelebration(false);
+    setScrambleSignal((n) => n + 1);
+  };
+  const reset = () => {
+    setShowCelebration(false);
+    setResetSignal((n) => n + 1);
+  };
 
   return (
     <>
@@ -23,14 +35,22 @@ export default function App() {
           gl.toneMappingExposure = 1.05;
         }}
       >
-        <Scene palette={palette} resetSignal={resetSignal} />
+        <Scene
+          palette={palette}
+          resetSignal={resetSignal}
+          scrambleSignal={scrambleSignal}
+          onSolved={() => setShowCelebration(true)}
+        />
       </Canvas>
 
       <Controls
         palette={palette}
         onCyclePalette={() => setPaletteIndex((i) => (i + 1) % PALETTES.length)}
-        onReset={() => setResetSignal((n) => n + 1)}
+        onReset={reset}
+        onScramble={scramble}
       />
+
+      <Celebration show={showCelebration} onTryAgain={scramble} />
     </>
   );
 }

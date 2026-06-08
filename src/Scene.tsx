@@ -5,9 +5,11 @@ import type { Palette } from "./materials";
 type SceneProps = {
   palette: Palette;
   resetSignal: number;
+  scrambleSignal: number;
+  onSolved: () => void;
 };
 
-export function Scene({ palette, resetSignal }: SceneProps) {
+export function Scene({ palette, resetSignal, scrambleSignal, onSolved }: SceneProps) {
   return (
     <>
       {/* Even lighting so every face of the cube stays readable */}
@@ -21,7 +23,12 @@ export function Scene({ palette, resetSignal }: SceneProps) {
       <directionalLight position={[-5, 3, -4]} intensity={0.7} />
       <Environment preset="studio" environmentIntensity={0.5} />
 
-      <RubikCube palette={palette} resetSignal={resetSignal} />
+      <RubikCube
+        palette={palette}
+        resetSignal={resetSignal}
+        scrambleSignal={scrambleSignal}
+        onSolved={onSolved}
+      />
 
       <ContactShadows
         position={[0, -2.1, 0]}

@@ -67,8 +67,8 @@ export const Cubelet = forwardRef<THREE.Group, CubeletProps>(function Cubelet(
       {stickerFaces.map((face) => (
         <RoundedBox
           key={face}
-          args={[0.8, 0.8, 0.06]}
-          radius={0.11}
+          args={[0.86, 0.86, 0.06]}
+          radius={0.12}
           smoothness={4}
           position={STICKER_TRANSFORMS[face].position}
           rotation={STICKER_TRANSFORMS[face].rotation}

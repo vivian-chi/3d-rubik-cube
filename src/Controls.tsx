@@ -4,6 +4,7 @@ type ControlsProps = {
   palette: Palette;
   onCyclePalette: () => void;
   onReset: () => void;
+  onScramble: () => void;
 };
 
 const panel: React.CSSProperties = {
@@ -46,13 +47,16 @@ const hint: React.CSSProperties = {
   userSelect: "none",
 };
 
-export function Controls({ palette, onCyclePalette, onReset }: ControlsProps) {
+export function Controls({ palette, onCyclePalette, onReset, onScramble }: ControlsProps) {
   return (
     <>
       <div style={hint}>Drag a face to turn it · drag the background to orbit</div>
       <div style={panel}>
         <button style={button} onClick={onReset}>
           ↺ Reset
+        </button>
+        <button style={button} onClick={onScramble}>
+          🔀 Scramble
         </button>
         <button style={button} onClick={onCyclePalette}>
           🎨 {palette.name}
