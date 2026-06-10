@@ -18,8 +18,8 @@ body,
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Soft, vivid-but-calm backdrop so the cube stays the hero */
-  background: radial-gradient(120% 120% at 50% 20%, #fef6f0 0%, #f3ecff 45%, #e9f3ff 100%);
+  /* Pink-to-lilac haze, like the marshmallow reference backdrop */
+  background: radial-gradient(130% 130% at 30% 10%, #f7dde2 0%, #ecd2e6 45%, #ccc9f0 100%);
 }
 
 #root {

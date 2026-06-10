@@ -49,17 +49,15 @@ export const Cubelet = forwardRef<THREE.Group, CubeletProps>(function Cubelet(
         receiveShadow
         onPointerDown={onPointerDown}
       >
-        {/* Frosted glass — translucent but not clear, so it stays subtle */}
+        {/* Semi-translucent glass body — milky, lets light through but not clear */}
         <meshPhysicalMaterial
-          color={palette.body}
-          transmission={0.82}
-          roughness={0.32}
-          thickness={0.7}
-          ior={1.45}
+          color="#ffffff"
+          transmission={0.6}
+          roughness={0.22}
+          thickness={0.8}
+          ior={1.5}
           metalness={0}
-          transparent
-          opacity={1}
-          envMapIntensity={1.2}
+          envMapIntensity={0.9}
         />
       </RoundedBox>
 
@@ -67,16 +65,20 @@ export const Cubelet = forwardRef<THREE.Group, CubeletProps>(function Cubelet(
       {stickerFaces.map((face) => (
         <RoundedBox
           key={face}
-          args={[0.86, 0.86, 0.06]}
-          radius={0.12}
-          smoothness={4}
+          args={[0.86, 0.86, 0.22]}
+          radius={0.11}
+          smoothness={6}
           position={STICKER_TRANSFORMS[face].position}
           rotation={STICKER_TRANSFORMS[face].rotation}
+          castShadow
+          receiveShadow
         >
+          {/* Matte marshmallow — velvety diffuse, no specular shine at all */}
           <meshStandardMaterial
             color={palette.faces[face].color}
-            roughness={0.5}
+            roughness={0.72}
             metalness={0}
+            envMapIntensity={0.25}
           />
         </RoundedBox>
       ))}

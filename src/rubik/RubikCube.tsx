@@ -288,7 +288,7 @@ export function RubikCube({ palette, resetSignal, scrambleSignal, onSolved }: Ru
   });
 
   return (
-    <group ref={groupRef} rotation={[0.45, -0.6, 0]}>
+    <group ref={groupRef} rotation={[0.5, -0.15, 0]}>
       {cubelets.map((c) => (
         <Cubelet
           key={c.id}
