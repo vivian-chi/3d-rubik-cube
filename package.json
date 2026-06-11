@@ -1,7 +1,8 @@
 {
-  "name": "cozy-avalanche",
+  "name": "3d-cube",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

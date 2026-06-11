@@ -19,4 +19,12 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // RubikCube drives an imperative three.js model: cubelet transforms live in
+    // a stable array mutated from useFrame/effects, never during render.
+    files: ['src/rubik/RubikCube.tsx'],
+    rules: {
+      'react-hooks/immutability': 'off',
+    },
+  },
 ])

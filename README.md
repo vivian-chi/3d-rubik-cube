@@ -1,73 +1,38 @@
-# React + TypeScript + Vite
+# 3D Rubik's Cube
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A candy-colored, fully playable Rubik's cube in the browser. Drag a face to turn a layer, scramble it, and solve it — a GSAP celebration (jump, spin, explosion, reassembly) plays when you genuinely win.
 
-Currently, two official plugins are available:
+**Live demo:** https://vivian-chi.github.io/3d-cube/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How to play
 
-## React Compiler
+- **Drag a face** of the cube to turn that layer — the turn axis is inferred from the face you grabbed and the direction you drag.
+- **Drag the background** to orbit the whole cube.
+- **🔀 Scramble** shuffles with ~24 rapid random turns; solving after a scramble triggers the celebration (Reset never does).
+- **↺ Reset** snaps the cube back to solved.
+- **🎨 Palette** cycles three color themes: Marshmallow, Candy, Jelly Rainbow.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech
 
-## Expanding the ESLint configuration
+- [React 19](https://react.dev) + TypeScript + [Vite](https://vite.dev)
+- [three.js](https://threejs.org) via [@react-three/fiber](https://github.com/pmndrs/react-three-fiber) and [drei](https://github.com/pmndrs/drei)
+- [GSAP](https://gsap.com) for the solve-celebration timeline
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The soft "marshmallow" look comes from a milky transmissive glass body per cubelet with matte rounded sticker tiles, ACES tone mapping, and warm/cool three-point lighting.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Cube state lives in refs, not React state: each of the 27 cubelets tracks logical grid coordinates plus a committed position/quaternion, and `useFrame` animates one 90° turn at a time. Solve detection checks face-color uniformity from each sticker's rotated normal, so a whole-cube rotation still counts as solved. See [docs/specs](docs/specs/) for the celebration design doc.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Develop
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # local dev server
+npm run build    # type-check + production build
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Pushes to `main` deploy to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The Vite `base` is `/3d-cube/`, so the repo must be named `3d-cube` (or update `vite.config.ts`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## License
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+[MIT](LICENSE)

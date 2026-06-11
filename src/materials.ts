@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 /**
  * Data-driven palettes + material config.
  *
@@ -43,32 +41,3 @@ export const PALETTES: Palette[] = [
     faces: faces(["#ff3b5c", "#ff8c2b", "#ffd02b", "#46d66f", "#2bb6ff", "#a35cff"]),
   },
 ];
-
-export type MaterialMode = "velvet" | "matte";
-
-/**
- * Procedural grayscale grain used as a fine bump/roughness map. Driven at high
- * tiling it reads as the peach-fuzz micro-texture of the velvet mode without any
- * custom shaders.
- */
-export function makeNoiseTexture(size = 256): THREE.CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const image = ctx.createImageData(size, size);
-  for (let i = 0; i < image.data.length; i += 4) {
-    // Bias toward mid-gray so the grain stays subtle, not harsh.
-    const v = 110 + Math.random() * 90;
-    image.data[i] = v;
-    image.data[i + 1] = v;
-    image.data[i + 2] = v;
-    image.data[i + 3] = 255;
-  }
-  ctx.putImageData(image, 0, 0);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(6, 6);
-  texture.needsUpdate = true;
-  return texture;
-}

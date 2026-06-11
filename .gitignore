@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Env files — never commit secrets
+.env
+.env.*
+
+# Build caches / test output
+*.tsbuildinfo
+coverage
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

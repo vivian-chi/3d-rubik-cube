@@ -42,7 +42,7 @@ type RubikCubeProps = {
 export function RubikCube({ palette, resetSignal, scrambleSignal, onSolved }: RubikCubeProps) {
   const { camera } = useThree();
   const groupRef = useRef<THREE.Group>(null!);
-  const cubelets = useMemo(buildCubelets, []);
+  const cubelets = useMemo(() => buildCubelets(), []);
 
   // Mutable interaction state (kept in refs so it never triggers re-renders).
   const turn = useRef<Turn | null>(null);
