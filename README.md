@@ -2,7 +2,9 @@
 
 A candy-colored, fully playable Rubik's cube in the browser. Drag a face to turn a layer, scramble it, and solve it — a GSAP celebration (jump, spin, explosion, reassembly) plays when you genuinely win.
 
-**Live demo:** https://vivian-chi.github.io/3d-cube/
+**Live demo:** https://vivian-chi.github.io/3d-rubik-cube/
+
+![A pastel marshmallow-styled 3D Rubik's cube in the browser](docs/preview.png)
 
 ## How to play
 
@@ -31,7 +33,7 @@ npm run build    # type-check + production build
 npm run lint
 ```
 
-Pushes to `main` deploy to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The Vite `base` is `/3d-cube/`, so the repo must be named `3d-cube` (or update `vite.config.ts`).
+Pushes to `main` deploy to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The Vite `base` is `/3d-rubik-cube/`, so the repo must be named `3d-rubik-cube` (or update `vite.config.ts`).
 
 ## License
 
